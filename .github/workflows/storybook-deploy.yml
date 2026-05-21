@@ -51,13 +51,13 @@ jobs:
         if: always()
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: smtp.gmail.com
-          server_port: 465
+          server_address: smtp.office365.com
+          server_port: 587
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: GitHub Actions build ${{ job.status }}
-          to: your.email@example.com
-          from: GitHub Actions <your.email@example.com>
+          to: your.email@outlook.com
+          from: GitHub Actions <your.email@outlook.com>
           body: |
             The workflow has completed with status: ${{ job.status }}.
             See details at: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
