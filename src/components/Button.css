@@ -23,8 +23,8 @@
   transform: translateY(1px);
 }
 
-.custom-btn-primary {
-  background: var(--grad-primary);
+ .custom-btn-primary {
+  background: green;
   box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
 }
 
