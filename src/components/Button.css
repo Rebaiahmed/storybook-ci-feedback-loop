@@ -23,9 +23,10 @@
   transform: translateY(1px);
 }
 
- .custom-btn-primary {
-  background: green;
+.custom-btn-primary {
+  background: var(--grad-primary);
   box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+  font-size: 10px; /* INTENTIONAL VISUAL BUG 2: font too small (10px instead of 0.95rem ~15px) */
 }
 
 .custom-btn-primary:hover:not(:disabled) {
@@ -58,6 +59,10 @@
   cursor: wait;
   pointer-events: none;
   opacity: 0.85;
+}
+
+.custom-btn-loading .btn-content {
+  display: none; /* INTENTIONAL VISUAL BUG 3: loading label text is hidden — user sees only spinner, no button label */
 }
 
 .btn-spinner {

@@ -54,9 +54,17 @@ Three approaches compared — we use **Chromatic** (cloud).
 
 ---
 
-### 6. Catching a Real Visual Bug
-The `Button` Danger state is intentionally styled **green instead of red**.
-Chromatic catches it. Unit tests don't. See [`BUG_REPORT.md`](./BUG_REPORT.md).
+### 6. Catching Real Visual Bugs
+
+Three intentional bugs are hidden in `Button.css`. Unit tests pass on all three. Chromatic catches all three.
+
+| Bug | What broke | Unit test | Chromatic |
+|---|---|---|---|
+| 🔴 Wrong color | Danger button is green instead of red | ✅ Passes | 🚨 Blocks PR |
+| 🔤 Font too small | Primary button text is 10px (unreadable) | ✅ Passes | 🚨 Blocks PR |
+| 👻 Missing label | Loading button text is hidden by CSS | ✅ Passes | 🚨 Blocks PR |
+
+See [`BUG_REPORT.md`](./BUG_REPORT.md) and [`Button.test.tsx`](./src/components/Button.test.tsx) for the full proof.
 
 ---
 
