@@ -1,197 +1,73 @@
 # Storybook + CI: My Favorite Frontend Feedback Loop
 
-> A robust proof-of-concept repository demonstrating the ultimate frontend QA workflow: declarative components, automated visual regression testing, and continuous documentation deployment.
+> Proof-of-concept repo for the blog post:
+> 📖 **[Read the full article on Medium →](https://medium.com/@ahmedrebai/storybook-ci-my-favorite-frontend-feedback-loop-visual-testing-pipeline-tips-eac0019c757e)**
 
 ---
 
-## 📖 The Frontend Feedback Loop Problem
+## What's Inside
 
-Have you ever merged a Pull Request where all the unit and integration tests passed perfectly, only to find out that a critical UI layout was broken in production? 
-
-Traditional test suites (like Jest or React Testing Library) excel at testing logical states and functional behaviors. However, they are completely blind to **visual appearance**. A button can have perfect event handlers, but if its background matches its text color or turns a bright green when it should be warning-red, traditional code tests will still report a green checkmark.
-
-**The Solution:** Scaffolding components declare-first in Storybook, and automating screenshot comparisons on every single push via Chromatic CI. 
+A React + TypeScript + Vite project with Storybook and a full visual regression CI pipeline using Chromatic and GitHub Actions.
 
 ---
 
-## 🛠️ Step 1: Setting Up a Visual-First Environment
+## Blog Sections → Code Map
 
-To build this loop, we scaffolded a clean, React + TypeScript workspace powered by Vite to keep rebuilds instant. The dependencies (configured in `package.json`) use the latest Storybook v8 framework:
+### 1. What is Storybook?
+Three components, each with all their states as stories:
 
-```json
-{
-  "scripts": {
-    "dev": "vite",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
-  },
-  "devDependencies": {
-    "storybook": "^8.0.0",
-    "@storybook/react-vite": "^8.0.0"
-  }
-}
-```
+| Component | Stories |
+|---|---|
+| `Button` | Primary, Danger, Disabled, Loading |
+| `Modal` | Default, With Footer, Without Footer |
+| `Card` | Default, Loading Skeleton, Error State |
 
-By keeping our styles scoped within dedicated component files, we ensure modularity and clean presentation.
-
----
-
-## 🎨 Step 2: Scaffolding Premium Components Declare-First
-
-We built three highly reusable components representing critical UI layers, ensuring **100% state coverage** as declarative stories using Storybook's official `StoryObj` args pattern:
-
-### 1. The Button Component
-Features states for `primary`, `danger`, `disabled`, and `loading`.
-* **Code**: `src/components/Button.tsx`
-* **Stories**: `src/components/Button.stories.tsx`
-
-```typescript
-// Declaring Button stories with strict TypeScript
-import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from './Button.tsx';
-
-const meta: Meta<typeof Button> = {
-  title: 'Components/Button',
-  component: Button,
-  tags: ['autodocs'],
-};
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Primary: Story = {
-  args: {
-    variant: 'primary',
-    children: 'Primary Action',
-  },
-};
-```
-
-### 2. The Modal Component
-Features standard overlays, custom footers, and footerless notification frames.
-* **Code**: `src/components/Modal.tsx`
-* **Stories**: `src/components/Modal.stories.tsx`
-
-### 3. The Card Component
-Includes default dashboard states, shimmering skeleton loading animations, and warning error boundary placeholders.
-* **Code**: `src/components/Card.tsx`
-* **Stories**: `src/components/Card.stories.tsx`
-
----
-
-## 🚀 Step 3: Automating Visual Regression Checks in CI
-
-Every branch push and pull request executes our visual testing pipeline. Chromatic compiles our storybook, takes snapshots, and runs cloud-based pixel comparison algorithms to check for changes.
-
-The workflow at `.github/workflows/visual-test.yml` caches dependencies to run in seconds and uses safe project token secrets:
-
-```yaml
-name: "Visual Tests"
-
-on:
-  push:
-  pull_request:
-
-jobs:
-  chromatic:
-    name: Run Chromatic
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Run Chromatic Tests
-        uses: chromaui/action@v11
-        with:
-          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-          onlyChanged: true
-          exitZeroOnChanges: true
+```bash
+npm run storybook
+# Opens at http://localhost:6006
 ```
 
 ---
 
-## 🐛 Step 4: Catching Visual Regressions (The Intentional Bug)
-
-To demonstrate the power of this loop, we have intentionally introduced a visual bug into `src/components/Button.css`:
-
-```css
-.custom-btn-danger {
-  background: var(--grad-success); /* INTENTIONAL VISUAL BUG: wrong background color (green instead of red) */
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
-}
-```
-
-Instead of a danger-red background gradient, the button is styled in success-green. 
-* **The Result**: A unit test checking if the button mounts will PASS. But **Chromatic CI** will capture the green button, compare it against the red baseline, and block the Pull Request, alerting the developer of a visual regression.
-* For more, check the [BUG_REPORT.md](BUG_REPORT.md) file.
+### 2. Before vs After
+![Before vs After](./images/before_vs_after_comparison.png)
 
 ---
 
-## 🌐 Step 5: Continuous Documentation Deployments
+### 3. Adding CI to the Mix
+Three approaches compared — we use **Chromatic** (cloud).
 
-When changes are verified and merged to `main`, the living styleguide must update automatically. Our second workflow at `.github/workflows/storybook-deploy.yml` builds and deploys Storybook directly to GitHub Pages using modern, safe ID token permissions:
-
-```yaml
-name: "Deploy Storybook"
-
-on:
-  push:
-    branches: [main]
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        # ... sets up Node and caches npm ...
-      - name: Build Storybook
-        run: npm run build-storybook
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-```
+![Approaches Comparison](./images/approaches_comparison.png)
 
 ---
 
-## 🚦 Getting Started Locally
+### 4. Setting Up Chromatic
+1. Create account at [chromatic.com](https://www.chromatic.com)
+2. Get your project token
+3. Add it to GitHub → Settings → Secrets → `CHROMATIC_PROJECT_TOKEN`
+4. Push — the pipeline runs automatically
 
-1. **Clone & Install Dependencies**:
-   ```bash
-   NODE_OPTIONS="--dns-result-order=ipv4first" npm install --legacy-peer-deps
-   ```
-2. **Start Local Storybook**:
-   ```bash
-   npm run storybook
-   ```
-3. **Verify Type Compilation**:
-   ```bash
-   npx tsc --noEmit
-   ```
-4. **Compile Static Storybook**:
-   ```bash
-   npm run build-storybook
-   ```
-# storybook-ci-feedback-loop
+---
+
+### 5. GitHub Actions Workflow
+`.github/workflows/visual-test.yml` — triggers on every push and PR.
+
+---
+
+### 6. Catching a Real Visual Bug
+The `Button` Danger state is intentionally styled **green instead of red**.
+Chromatic catches it. Unit tests don't. See [`BUG_REPORT.md`](./BUG_REPORT.md).
+
+---
+
+### 7. Bonus: Auto-Deploy Storybook
+`.github/workflows/storybook-deploy.yml` — deploys your living component library to GitHub Pages on every merge to `main`.
+
+---
+
+## Run Locally
+
+```bash
+npm install --legacy-peer-deps
+npm run storybook
+```
